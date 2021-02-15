@@ -88,7 +88,7 @@ public class Shader {
         success = glGetShaderi(fragmentID, GL_COMPILE_STATUS);
         if (success == GL_FALSE) {
             int len = glGetShaderi(fragmentID, GL_INFO_LOG_LENGTH);
-            System.out.println("ERROR: '" + filepath +"'\n\tFragment Shader compilation failed.");
+            System.out.println("ERROR: '" + filepath + "'\n\tFragment Shader compilation failed.");
             System.out.println(glGetShaderInfoLog(fragmentID, len));
             assert false : "";
         }
@@ -101,16 +101,16 @@ public class Shader {
 
         // Check for linking errors
         success = glGetProgrami(shaderProgramID, GL_LINK_STATUS);
-        if(success == GL_FALSE) {
+        if (success == GL_FALSE) {
             int len = glGetShaderi(shaderProgramID, GL_INFO_LOG_LENGTH);
-            System.out.println("ERROR: '" + filepath +"'\n\tLinking of shaders failed.");
+            System.out.println("ERROR: '" + filepath + "'\n\tLinking of shaders failed.");
             System.out.println(glGetProgramInfoLog(shaderProgramID, len));
-            assert false: "";
+            assert false : "";
         }
     }
 
     public void use() {
-        if(!beingUsed) {
+        if (!beingUsed) {
             // Bind shader program
             glUseProgram(shaderProgramID);
             beingUsed = true;

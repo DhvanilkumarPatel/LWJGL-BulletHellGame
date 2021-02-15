@@ -37,12 +37,12 @@ public class MouseListener {
     }
 
     public static void mouseButtonCallback(long WindowID, int button, int action, int mods) {
-        if(action == GLFW_PRESS) {
-            if(button < get().mouseButtonPressed.length) {
+        if (action == GLFW_PRESS) {
+            if (button < get().mouseButtonPressed.length) {
                 get().mouseButtonPressed[button] = true;
             }
         } else if (action == GLFW_RELEASE) {
-            if(button < get().mouseButtonPressed.length) {
+            if (button < get().mouseButtonPressed.length) {
                 get().mouseButtonPressed[button] = false;
                 get().isDragging = false;
             }

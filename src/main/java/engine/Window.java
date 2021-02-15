@@ -5,33 +5,31 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import util.Time;
 
-import java.util.Objects;
-
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class Window {
+    private int width, height;
+    private String title;
+    private long glfwWindow;
 
-    int width, height;
-
-    private final String title;
+    public float r, g, b, a;
+    private boolean fadeToBlack = false;
 
     private static Window window = null;
 
-    private long windowID;
-
     private static Scene currentScene;
 
-    public float r = 1, g = 1, b = 1, a = 1;
-
-
     private Window() {
-        //1920 x 1080
-        this.width = 1000;
-        this.height = 600;
-        this.title = "Game";
+        this.width = 1920;
+        this.height = 1080;
+        this.title = "Mario";
+        r = 0;
+        b = 0;
+        g = 0;
+        a = 1;
     }
 
     public static void changeScene(int newScene) {
@@ -39,13 +37,15 @@ public class Window {
             case 0:
                 currentScene = new LevelEditorScene();
                 currentScene.init();
+                currentScene.start();
                 break;
             case 1:
                 currentScene = new LevelScene();
                 currentScene.init();
+                currentScene.start();
                 break;
             default:
-                assert false : "Unknown scene '" + newScene +"'";
+                assert false : "Unknown scene '" + newScene + "'";
                 break;
         }
     }
@@ -55,36 +55,35 @@ public class Window {
             Window.window = new Window();
         }
 
-        return window;
+        return Window.window;
+    }
+
+    public static Scene getScene() {
+        return get().currentScene;
     }
 
     public void run() {
+        System.out.println("Hello LWJGL " + Version.getVersion() + "!");
 
-        System.out.println("LWJGL Run: " + Version.getVersion());
+        init();
+        loop();
 
-        try {
-            // initialize window
-            init();
-            // loop for window
-            loop();
-        } finally {
-            // Free memory
-            glfwFreeCallbacks(windowID);
-            glfwDestroyWindow(windowID);
+        // Free the memory
+        glfwFreeCallbacks(glfwWindow);
+        glfwDestroyWindow(glfwWindow);
 
-            // terminate GLFW and free error callback
-            glfwTerminate();
-            Objects.requireNonNull(glfwSetErrorCallback(null)).free();
-        }
+        // Terminate GLFW and the free the error callback
+        glfwTerminate();
+        glfwSetErrorCallback(null).free();
     }
 
     public void init() {
-        // setup error callback
+        // Setup an error callback
         GLFWErrorCallback.createPrint(System.err).set();
 
-        // Init GLFW
-        if (!glfwInit()){
-            throw new IllegalStateException("Unable to initalize GLFW");
+        // Initialize GLFW
+        if (!glfwInit()) {
+            throw new IllegalStateException("Unable to initialize GLFW.");
         }
 
         // Configure GLFW
@@ -93,63 +92,56 @@ public class Window {
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
-        // Create window
-        windowID = glfwCreateWindow(this.width, this.height, this.title, NULL, NULL);
-        if (windowID == NULL) {
-            throw new IllegalStateException("failed to create GLFW window.");
+        // Create the window
+        glfwWindow = glfwCreateWindow(this.width, this.height, this.title, NULL, NULL);
+        if (glfwWindow == NULL) {
+            throw new IllegalStateException("Failed to create the GLFW window.");
         }
 
-        // Setup mouse callbacks
-        glfwSetCursorPosCallback(windowID, MouseListener::mousePosCallback);
-        glfwSetMouseButtonCallback(windowID, MouseListener::mouseButtonCallback);
-        glfwSetScrollCallback(windowID, MouseListener::mouseScrollCallback);
-
-        // Setup key callback
-        glfwSetKeyCallback(windowID, KeyListener::keyCallback);
-
+        glfwSetCursorPosCallback(glfwWindow, MouseListener::mousePosCallback);
+        glfwSetMouseButtonCallback(glfwWindow, MouseListener::mouseButtonCallback);
+        glfwSetScrollCallback(glfwWindow, MouseListener::mouseScrollCallback);
+        glfwSetKeyCallback(glfwWindow, KeyListener::keyCallback);
 
         // Make the OpenGL context current
-        glfwMakeContextCurrent(windowID);
-
+        glfwMakeContextCurrent(glfwWindow);
         // Enable v-sync
         glfwSwapInterval(1);
 
-        // Make window visable
-        glfwShowWindow(windowID);
+        // Make the window visible
+        glfwShowWindow(glfwWindow);
 
-        // Allows the usage of bindings
+        // This line is critical for LWJGL's interoperation with GLFW's
+        // OpenGL context, or any context that is managed externally.
+        // LWJGL detects the context that is current in the current thread,
+        // creates the GLCapabilities instance and makes the OpenGL
+        // bindings available for use.
         GL.createCapabilities();
 
-        // Sets start scene
-        changeScene(0);
+        Window.changeScene(0);
     }
 
     public void loop() {
-
         float beginTime = Time.getTime();
-        float endTime = Time.getTime();
+        float endTime;
         float dt = -1.0f;
 
-        while (!glfwWindowShouldClose(windowID)) {
+        while (!glfwWindowShouldClose(glfwWindow)) {
             // Poll events
             glfwPollEvents();
 
-            // Set clear color
             glClearColor(r, g, b, a);
-            // Use clear color
             glClear(GL_COLOR_BUFFER_BIT);
 
-            if(dt >= 0)
+            if (dt >= 0) {
                 currentScene.update(dt);
+            }
 
-
-            // Swaps buffers
-            glfwSwapBuffers(windowID);
+            glfwSwapBuffers(glfwWindow);
 
             endTime = Time.getTime();
             dt = endTime - beginTime;
             beginTime = endTime;
         }
     }
-
 }
